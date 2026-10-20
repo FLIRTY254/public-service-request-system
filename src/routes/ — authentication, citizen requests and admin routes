@@ -1,0 +1,113 @@
+const express = require('express');
+const app = express();
+
+// Middleware to parse incoming JSON requests
+app.use(express.json());
+
+// ==========================================
+// 1. AUTHENTICATION ROUTES
+// ==========================================
+
+// POST /api/auth/register
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { username, email, password, role } = req.body;
+        // TODO: Hash password and save user to database
+        res.status(201).json({ message: 'User registered successfully', user: { username, email, role: role || 'citizen' } });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST /api/auth/login
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        // TODO: Validate credentials and generate a JWT token
+        res.status(200).json({ 
+            message: 'Logged in successfully', 
+            token: 'sample-jwt-token',
+            user: { email, role: 'citizen' } 
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+// ==========================================
+// 2. CITIZEN REQUEST ROUTES
+// ==========================================
+
+// POST /api/citizen/requests - Submit a new request/complaint
+app.post('/api/citizen/requests', async (req, res) => {
+    try {
+        const { title, description, category } = req.body;
+        // TODO: Save request tied to the logged-in citizen
+        res.status(201).json({ 
+            message: 'Request submitted successfully', 
+            request: { id: 1, title, description, category, status: 'Pending' } 
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/citizen/requests - View own submitted requests
+app.get('/api/citizen/requests', async (req, res) => {
+    try {
+        // TODO: Fetch requests belonging only to the authenticated citizen
+        res.status(200).json({ 
+            requests: [
+                { id: 1, title: 'Pothole Repair', description: 'Main street pothole', status: 'Pending' }
+            ] 
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+// ==========================================
+// 3. ADMIN ROUTES
+// ==========================================
+
+// GET /api/admin/requests - View all citizen requests in the system
+app.get('/api/admin/requests', async (req, res) => {
+    try {
+        // TODO: Fetch all requests from the database (admin only)
+        res.status(200).json({ 
+            allRequests: [
+                { id: 1, citizenId: 101, title: 'Pothole Repair', status: 'Pending' },
+                { id: 2, citizenId: 102, title: 'Streetlight Broken', status: 'In Progress' }
+            ] 
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// PATCH /api/admin/requests/:id - Update status of a citizen request
+app.patch('/api/admin/requests/:id', async (req, res) => {
+    try {
+        const requestId = req.params.id;
+        const { status } = req.body; // e.g., 'Approved', 'Rejected', 'Resolved'
+        
+        // TODO: Update the request status in the database
+        res.status(200).json({ 
+            message: `Request #${requestId} status updated successfully`, 
+            newStatus: status 
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+// ==========================================
+// START SERVER
+// ==========================================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});

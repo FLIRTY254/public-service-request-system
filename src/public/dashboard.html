@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Citizen Dashboard | Public Service Request System</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f6fa;
+      color: #243447;
+    }
+
+    header {
+      background: #173b63;
+      color: white;
+      padding: 20px 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    header h1 { margin: 0; font-size: 24px; }
+    header p { margin: 6px 0 0; color: #d8e6f5; }
+
+    nav { display: flex; gap: 12px; align-items: center; }
+    nav a, nav button {
+      color: white;
+      background: transparent;
+      border: 1px solid #ffffff80;
+      border-radius: 6px;
+      padding: 9px 12px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    main { max-width: 1150px; margin: 28px auto; padding: 0 18px; }
+    h2 { margin-bottom: 6px; }
+    .muted { color: #64748b; }
+
+    .panel {
+      background: white;
+      border: 1px solid #dce3ec;
+      border-radius: 12px;
+      padding: 22px;
+      margin: 22px 0;
+      box-shadow: 0 3px 12px #142d4b08;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 7px; }
+    .full { grid-column: 1 / -1; }
+    label { font-weight: bold; font-size: 14px; }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      font: inherit;
+    }
+
+    textarea { min-height: 110px; resize: vertical; }
+
+    button.primary {
+      background: #2463a6;
+      color: white;
+      border: 0;
+      border-radius: 7px;
+      padding: 12px 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: .6; cursor: wait; }
+
+    .message { margin-left: 10px; font-size: 14px; }
+    .error { color: #b42318; }
+    .success { color: #17643b; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 680px; }
+    th, td { padding: 13px 10px; text-align: left; border-bottom: 1px solid #dce3ec; }
+    th { background: #f8fafc; font-size: 13px; text-transform: uppercase; }
+    td { font-size: 14px; }
+    td small { display: block; color: #64748b; margin-top: 4px; }
+
+    .status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .pending { background: #fef3c7; color: #854d0e; }
+    .in-progress { background: #dbeafe; color: #1d4ed8; }
+    .resolved { background: #dcfce7; color: #166534; }
+    .empty { text-align: center; padding: 25px; color: #64748b; }
+    footer { text-align: center; padding: 20px; color: #64748b; }
+
+    @media (max-width: 650px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .full { grid-column: auto; }
+      .panel { padding: 15px; }
+      header h1 { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Public Service Request System</h1>
+    <p>Citizen Portal — Submit and track service requests</p>
+  </div>
+  <nav>
+    <a href="/dashboard.html">My Requests</a>
+    <a href="/admin.html" id="adminLink" hidden>Admin</a>
+    <button type="button" id="logoutButton">Log Out</button>
+  </nav>
+</header>
+
+<main>
+  <h2 id="welcome">My Service Requests</h2>
+  <p class="muted">Report community issues and follow their progress.</p>
+
+  <section class="panel">
+    <h3>Submit a New Request</h3>
+    <form id="requestForm">
+      <div class="form-grid">
+        <div class="field">
+          <label for="category">Category *</label>
+          <select id="category" name="category" required>
+            <option value="">Choose a category</option>
+            <option value="Broken streetlight">Broken streetlight</option>
+            <option value="Water issue">Water issue</option>
+            <option value="Garbage collection">Garbage collection</option>
+            <option value="Road damage">Road damage</option>
+            <option value="Drainage">Drainage</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="location">Location *</label>
+          <input id="location" name="location" required
+                 maxlength="180"
+                 placeholder="Street, estate or landmark">
+        </div>
+
+        <div class="field full">
+          <label for="description">Description *</label>
+          <textarea id="description" name="description" required
+                    maxlength="3000"
+                    placeholder="Describe the issue clearly..."></textarea>
+        </div>
+
+        <div class="field full">
+          <label for="image">Attach Image (Optional)</label>
+          <input id="image" name="image" type="file" accept="image/*">
+        </div>
+      </div>
+
+      <p>
+        <button class="primary" id="submitButton" type="submit">
+          Submit Request
+        </button>
+        <span id="formMessage" class="message" role="status"></span>
+      </p>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h3>My Requests</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Request</th>
+            <th>Location</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Image</th>
+          </tr>
+        </thead>
+        <tbody id="requestsBody">
+          <tr><td colspan="5" class="empty">Loading requests...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p id="listMessage" class="message" role="status"></p>
+  </section>
+</main>
+
+<footer>Public Service Request System</footer>
+
+<script>
+  const requestForm = document.getElementById("requestForm");
+  const requestsBody = document.getElementById("requestsBody");
+  const formMessage = document.getElementById("formMessage");
+  const listMessage = document.getElementById("listMessage");
+  const submitButton = document.getElementById("submitButton");
+
+  async function api(url, options = {}) {
+    const headers = { ...(options.headers || {}) };
+
+    if (!(options.body instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    const response = await fetch(url, {
+      credentials: "same-origin",
+      ...options,
+      headers
+    });
+
+    const type = response.headers.get("content-type") || "";
+    const data = type.includes("application/json")
+      ? await response.json()
+      : await response.text();
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        window.location.href = "/login.html";
+      }
+      throw new Error(
+        data?.message || data?.error || `Request failed (${response.status})`
+      );
+    }
+
+    return data;
+  }
+
+  function getArray(data) {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.requests)) return data.requests;
+    if (Array.isArray(data?.data?.requests)) return data.data.requests;
+    if (Array.isArray(data?.data)) return data.data;
+    return [];
+  }
+
+  function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;",
+      '"': "&quot;", "'": "&#39;"
+    })[char]);
+  }
+
+  function getStatus(status) {
+    const value = String(status || "Pending")
+      .toLowerCase().replace(/[_\s]+/g, "-");
+
+    if (value === "resolved") return "Resolved";
+    if (value === "in-progress") return "In Progress";
+    return "Pending";
+  }
+
+  function statusClass(status) {
+    const value = getStatus(status);
+    if (value === "Resolved") return "resolved";
+    if (value === "In Progress") return "in-progress";
+    return "pending";
+  }
+
+  function formatDate(value) {
+    if (!value) return "—";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? escapeHTML(value)
+      : date.toLocaleDateString();
+  }
+
+  async function loadUser() {
+    const data = await api("/api/me");
+    const user = data.user || data.data?.user || data.data || data;
+    const name = user.name || user.fullName || user.username || user.email;
+
+    if (name) {
+      document.getElementById("welcome").textContent = `Welcome, ${name}`;
+    }
+
+    if (["admin", "administrator"].includes(
+      String(user.role || "").toLowerCase()
+    )) {
+      document.getElementById("adminLink").hidden = false;
+    }
+  }
+
+  async function loadRequests() {
+    try {
+      const data = await api("/api/requests");
+      const requests = getArray(data);
+
+      if (!requests.length) {
+        requestsBody.innerHTML =
+          '<tr><td colspan="5" class="empty">You have not submitted any requests yet.</td></tr>';
+        return;
+      }
+
+      requestsBody.innerHTML = requests.map(request => {
+        const id = request.id ?? request.requestId ?? request.request_id ?? "—";
+        const category = request.category || request.title || "Service request";
+        const description = request.description || "";
+        const location = request.location || "—";
+        const date = request.createdAt || request.created_at ||
+                     request.date || request.submittedAt;
+        const status = getStatus(request.status);
+        const image = request.imageUrl || request.image_url || "";
+
+        return `
+          <tr>
+            <td>
+              <strong>${escapeHTML(category)}</strong>
+              <small>Request #${escapeHTML(id)}</small>
+              <small>${escapeHTML(description)}</small>
+            </td>
+            <td>${escapeHTML(location)}</td>
+            <td>${formatDate(date)}</td>
+            <td><span class="status ${statusClass(status)}">${status}</span></td>
+            <td>${image
+              ? `<a href="${escapeHTML(image)}" target="_blank" rel="noopener">View image</a>`
+              : "—"}</td>
+          </tr>`;
+      }).join("");
+    } catch (error) {
+      requestsBody.innerHTML =
+        '<tr><td colspan="5" class="empty">Could not load requests.</td></tr>';
+      listMessage.textContent = error.message;
+      listMessage.className = "message error";
+    }
+  }
+
+  requestForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    formMessage.textContent = "";
+    formMessage.className = "message";
+
+    if (!requestForm.reportValidity()) return;
+
+    submitButton.disabled = true;
+    submitButton.textContent = "Submitting...";
+
+    try {
+      const formData = new FormData();
+      formData.append("category", document.getElementById("category").value);
+      formData.append("location", document.getElementById("location").value.trim());
+      formData.append("description", document.getElementById("description").value.trim());
+
+      const file = document.getElementById("image").files[0];
+      if (file) formData.append("image", file);
+
+      await api("/api/requests", {
+        method: "POST",
+        body: formData
+      });
+
+      requestForm.reset();
+      formMessage.textContent = "Request submitted successfully.";
+      formMessage.className = "message success";
+      await loadRequests();
+    } catch (error) {
+      formMessage.textContent = error.message || "Unable to submit request.";
+      formMessage.className = "message error";
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Submit Request";
+    }
+  });
+
+  document.getElementById("logoutButton").addEventListener("click", async () => {
+    try {
+      await api("/api/logout", {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+    } catch (error) {
+      console.error(error);
+    }
+    window.location.href = "/login.html";
+  });
+
+  (async function init() {
+    try {
+      await loadUser();
+    } catch (error) {
+      console.error("Could not load user:", error);
+    }
+    await loadRequests();
+  })();
+</script>
+</body>
+</html>

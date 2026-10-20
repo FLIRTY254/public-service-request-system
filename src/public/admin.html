@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Public Service Request System</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f6fa;
+      color: #243447;
+    }
+
+    header {
+      background: #173b63;
+      color: white;
+      padding: 20px 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    header h1 { margin: 0; font-size: 24px; }
+    header p { margin: 6px 0 0; color: #d8e6f5; }
+
+    nav { display: flex; gap: 10px; }
+    nav a, nav button {
+      color: white;
+      background: transparent;
+      border: 1px solid #ffffff80;
+      border-radius: 6px;
+      padding: 9px 12px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    main { max-width: 1250px; margin: 28px auto; padding: 0 18px; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin: 24px 0;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #dce3ec;
+      border-radius: 12px;
+      padding: 22px;
+      box-shadow: 0 3px 12px #142d4b08;
+    }
+
+    .card p { margin: 0; color: #64748b; font-weight: bold; }
+    .number { font-size: 36px; font-weight: bold; margin-top: 10px; }
+    .total { border-top: 4px solid #2463a6; }
+    .open { border-top: 4px solid #d97706; }
+    .resolved-card { border-top: 4px solid #16a34a; }
+
+    .panel {
+      background: white;
+      border: 1px solid #dce3ec;
+      border-radius: 12px;
+      padding: 22px;
+      margin-bottom: 24px;
+      box-shadow: 0 3px 12px #142d4b08;
+    }
+
+    .panel-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .filter { display: flex; gap: 10px; align-items: center; }
+    label { font-weight: bold; font-size: 14px; }
+
+    select {
+      padding: 9px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      background: white;
+      font: inherit;
+    }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 950px; }
+    th, td {
+      padding: 13px 10px;
+      text-align: left;
+      border-bottom: 1px solid #dce3ec;
+      vertical-align: middle;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #475569;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .pending { background: #fef3c7; color: #854d0e; }
+    .in-progress { background: #dbeafe; color: #1d4ed8; }
+    .resolved { background: #dcfce7; color: #166534; }
+
+    .status-cell {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .status-select { max-width: 130px; }
+    .save-button {
+      background: #2463a6;
+      color: white;
+      border: 0;
+      padding: 9px 11px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .save-button:disabled { opacity: .6; cursor: wait; }
+    .message { font-size: 14px; }
+    .error { color: #b42318; }
+    .success { color: #17643b; }
+    .empty { text-align: center; padding: 25px; color: #64748b; }
+
+    @media (max-width: 700px) {
+      .cards { grid-template-columns: 1fr; }
+      .panel { padding: 15px; }
+      header h1 { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Public Service Request System</h1>
+    <p>Administrator Portal — Manage citizen requests</p>
+  </div>
+  <nav>
+    <a href="/dashboard.html">Citizen Dashboard</a>
+    <button type="button" id="logoutButton">Log Out</button>
+  </nav>
+</header>
+
+<main>
+  <h2>Administrator Dashboard</h2>
+  <p>Monitor requests and update their progress.</p>
+
+  <section class="cards">
+    <article class="card total">
+      <p>Total Requests</p>
+      <div class="number" id="totalCount">—</div>
+    </article>
+
+    <article class="card open">
+      <p>Open Requests</p>
+      <div class="number" id="openCount">—</div>
+    </article>
+
+    <article class="card resolved-card">
+      <p>Resolved Requests</p>
+      <div class="number" id="resolvedCount">—</div>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-top">
+      <h3>All Service Requests</h3>
+
+      <div class="filter">
+        <label for="statusFilter">Filter by status:</label>
+        <select id="statusFilter">
+          <option value="All">All statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Request ID</th>
+            <th>Citizen</th>
+            <th>Category</th>
+            <th>Location</th>
+            <th>Date</th>
+            <th>Status / Update</th>
+          </tr>
+        </thead>
+        <tbody id="requestsBody">
+          <tr><td colspan="6" class="empty">Loading requests...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p id="message" class="message" role="status" aria-live="polite"></p>
+  </section>
+</main>
+
+<script>
+  const requestsBody = document.getElementById("requestsBody");
+  const message = document.getElementById("message");
+  const statusFilter = document.getElementById("statusFilter");
+
+  let allRequests = [];
+
+  async function api(url, options = {}) {
+    const headers = { ...(options.headers || {}) };
+
+    if (!(options.body instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    const response = await fetch(url, {
+      credentials: "same-origin",
+      ...options,
+      headers
+    });
+
+    const type = response.headers.get("content-type") || "";
+    const data = type.includes("application/json")
+      ? await response.json()
+      : await response.text();
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        window.location.href = "/login.html";
+      }
+
+      throw new Error(
+        data?.message || data?.error || `Request failed (${response.status})`
+      );
+    }
+
+    return data;
+  }
+
+  function getArray(data) {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.requests)) return data.requests;
+    if (Array.isArray(data?.data?.requests)) return data.data.requests;
+    if (Array.isArray(data?.data)) return data.data;
+    return [];
+  }
+
+  function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;",
+      '"': "&quot;", "'": "&#39;"
+    })[char]);
+  }
+
+  function getId(request) {
+    return request.id ?? request.requestId ?? request.request_id ?? "";
+  }
+
+  function getStatus(status) {
+    const value = String(status || "Pending")
+      .toLowerCase().replace(/[_\s]+/g, "-");
+
+    if (value === "resolved") return "Resolved";
+    if (value === "in-progress") return "In Progress";
+    return "Pending";
+  }
+
+  function statusClass(status) {
+    const value = getStatus(status);
+    if (value === "Resolved") return "resolved";
+    if (value === "In Progress") return "in-progress";
+    return "pending";
+  }
+
+  function formatDate(value) {
+    if (!value) return "—";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? escapeHTML(value)
+      : date.toLocaleDateString();
+  }
+
+  function getCitizen(request) {
+    const citizen = request.citizen || request.user ||
+                    request.createdBy || request.created_by;
+
+    if (typeof citizen === "string") return citizen;
+
+    return citizen?.name || citizen?.fullName ||
+      citizen?.full_name || citizen?.email ||
+      request.citizenName || request.citizen_name || "—";
+  }
+
+  function updateSummary() {
+    const total = allRequests.length;
+    const resolved = allRequests.filter(
+      request => getStatus(request.status) === "Resolved"
+    ).length;
+
+    document.getElementById("totalCount").textContent = total;
+    document.getElementById("openCount").textContent = total - resolved;
+    document.getElementById("resolvedCount").textContent = resolved;
+  }
+
+  async function loadAnalytics() {
+    try {
+      const data = await api("/api/admin/analytics");
+      const stats = data.analytics || data.data?.analytics ||
+                    data.data || data;
+
+      const total = stats.totalRequests ?? stats.total_requests ?? stats.total;
+      const open = stats.openRequests ?? stats.open_requests ?? stats.open;
+      const resolved = stats.resolvedRequests ??
+                       stats.resolved_requests ?? stats.resolved;
+
+      if (total !== undefined) {
+        document.getElementById("totalCount").textContent = total;
+      }
+      if (open !== undefined) {
+        document.getElementById("openCount").textContent = open;
+      }
+      if (resolved !== undefined) {
+        document.getElementById("resolvedCount").textContent = resolved;
+      }
+    } catch (error) {
+      console.warn("Analytics unavailable; using request list totals.", error);
+    }
+  }
+
+  function renderRequests() {
+    const filter = statusFilter.value;
+
+    const visibleRequests = allRequests.filter(request =>
+      filter === "All" || getStatus(request.status) === filter
+    );
+
+    if (!visibleRequests.length) {
+      requestsBody.innerHTML =
+        '<tr><td colspan="6" class="empty">No requests match this filter.</td></tr>';
+      return;
+    }
+
+    requestsBody.innerHTML = visibleRequests.map(request => {
+      const id = getId(request);
+      const status = getStatus(request.status);
+      const citizen = getCitizen(request);
+      const category = request.category || request.title || "—";
+      const location = request.location || "—";
+      const date = request.createdAt || request.created_at ||
+                   request.date || request.submittedAt;
+
+      return `
+        <tr>
+          <td>#${escapeHTML(id)}</td>
+          <td>${escapeHTML(citizen)}</td>
+          <td>${escapeHTML(category)}</td>
+          <td>${escapeHTML(location)}</td>
+          <td>${formatDate(date)}</td>
+          <td>
+            <div class="status-cell">
+              <span class="status ${statusClass(status)}">
+                ${status}
+              </span>
+
+              <select class="status-select"
+                      aria-label="New status for request ${escapeHTML(id)}">
+                <option value="Pending" ${status === "Pending" ? "selected" : ""}>Pending</option>
+                <option value="In Progress" ${status === "In Progress" ? "selected" : ""}>In Progress</option>
+                <option value="Resolved" ${status === "Resolved" ? "selected" : ""}>Resolved</option>
+              </select>
+
+              <button type="button"
+                      class="save-button"
+                      data-id="${escapeHTML(id)}">
+                Save
+              </button>
+            </div>
+          </td>
+        </tr>`;
+    }).join("");
+  }
+
+  async function loadRequests() {
+    requestsBody.innerHTML =
+      '<tr><td colspan="6" class="empty">Loading requests...</td></tr>';
+
+    try {
+      const data = await api("/api/requests");
+      allRequests = getArray(data);
+
+      updateSummary();
+      renderRequests();
+      await loadAnalytics();
+    } catch (error) {
+      requestsBody.innerHTML =
+        '<tr><td colspan="6" class="empty">Could not load requests.</td></tr>';
+
+      message.textContent = error.message;
+      message.className = "message error";
+    }
+  }
+
+  requestsBody.addEventListener("click", async event => {
+    const button = event.target.closest(".save-button");
+    if (!button) return;
+
+    const id = button.dataset.id;
+    const row = button.closest("tr");
+    const newStatus = row.querySelector(".status-select").value;
+
+    button.disabled = true;
+    button.textContent = "Saving...";
+    message.textContent = "";
+    message.className = "message";
+
+    try {
+      await api(
+        `/api/admin/requests/${encodeURIComponent(id)}/status`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ status: newStatus })
+        }
+      );
+
+      const request = allRequests.find(
+        item => String(getId(item)) === String(id)
+      );
+
+      if (request) request.status = newStatus;
+
+      updateSummary();
+      renderRequests();
+      await loadAnalytics();
+
+      message.textContent =
+        `Request #${id} updated to ${newStatus}.`;
+      message.className = "message success";
+    } catch (error) {
+      message.textContent = error.message || "Could not update status.";
+      message.className = "message error";
+
+      button.disabled = false;
+      button.textContent = "Save";
+    }
+  });
+
+  statusFilter.addEventListener("change", renderRequests);
+
+  document.getElementById("logoutButton").addEventListener("click", async () => {
+    try {
+      await api("/api/logout", {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+
+    window.location.href = "/login.html";
+  });
+
+  (async function init() {
+    try {
+      const data = await api("/api/me");
+      const user = data.user || data.data?.user || data.data || data;
+
+      if (!["admin", "administrator"].includes(
+        String(user.role || "").toLowerCase()
+      )) {
+        message.textContent = "Administrator access is required.";
+        message.className = "message error";
+        return;
+      }
+
+      await loadRequests();
+    } catch (error) {
+      console.error("Could not verify administrator:", error);
+    }
+  })();
+</script>
+</body>
+</html>

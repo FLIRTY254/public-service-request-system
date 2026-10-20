@@ -1,0 +1,13 @@
+const formData = new FormData();
+formData.append("category", category);
+formData.append("location", location);
+formData.append("description", description);
+
+if (imageInput.files[0]) {
+  formData.append("image", imageInput.files[0]);
+}
+
+const response = await fetch("/api/requests", {
+  method: "POST",
+  body: formData
+});

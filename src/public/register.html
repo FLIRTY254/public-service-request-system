@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Citizen Registration</title>
+	<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+	<main class="hero">
+		<h1>Create your account</h1>
+		<form id="registerForm">
+			<p><input name="name" placeholder="Full name" required minlength="2"></p>
+			<p><input name="email" type="email" placeholder="Email address" required></p>
+			<p><input name="password" type="password" placeholder="Password (10+ characters)" required minlength="10" maxlength="72"></p>
+			<button class="button" type="submit">Register</button>
+			<p id="message" role="status"></p>
+		</form>
+		<p>Already registered? <a href="/login.html">Login</a></p>
+	</main>
+	<script src="/js/app.js"></script>
+</body>
+</html>
